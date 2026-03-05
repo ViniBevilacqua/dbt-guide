@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbt Guide: From Zero to Hero</title>
+    
+    <!-- Tailwind CSS with Typography Plugin -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Highlight.js for Code Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        dbt: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6', 
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            900: '#134e4a',
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        /* Active Sidebar Link */
+        .nav-link {
+            transition: all 0.2s ease;
+        }
+        .nav-link.active {
+            background-color: #f0fdfa;
+            color: #0f766e;
+            border-right: 3px solid #14b8a6;
+            font-weight: 600;
+        }
+
+        /* Typography and Code Block tweaks */
+        code {
+            font-family: 'JetBrains Mono', monospace !important;
+        }
+        
+        /* Premium Inline code styling */
+        :not(pre) > code {
+            color: #0f766e;
+            background-color: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.375rem;
+            font-size: 0.85em;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        /* Preformatted code blocks */
+        pre {
+            background-color: #0f172a !important; /* Deeper, richer dark */
+            border-radius: 0.75rem !important;
+            padding: 1.5rem !important;
+            margin: 1.5rem 0 !important;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            border: 1px solid #1e293b;
+            overflow-x: auto;
+        }
+        
+        pre code {
+            font-size: 0.875em !important;
+            line-height: 1.6 !important;
+            text-shadow: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            color: #e2e8f0;
+            border: none !important;
+        }
+
+        /* Hide details default arrow cleanly */
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        /* Smooth Details Animation */
+        details[open] summary ~ * {
+            animation: slideDown 0.3s ease-in-out;
+        }
+        @keyframes slideDown {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-dbt-100 selection:text-dbt-900">
+
+    <!-- Mobile Header -->
+    <div class="lg:hidden sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-2 text-dbt-700 font-bold text-lg tracking-tight">
+            <i data-lucide="database" class="w-5 h-5"></i>
+            dbt Guide
+        </div>
+        <button id="mobile-menu-btn" class="text-slate-500 hover:text-slate-800 p-1 transition-colors">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col h-screen overflow-y-auto shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        <div class="p-6 hidden lg:flex items-center gap-2 text-dbt-700 font-bold text-xl tracking-tight">
+            <div class="bg-dbt-50 p-2 rounded-lg border border-dbt-100">
+                <i data-lucide="database" class="w-5 h-5 text-dbt-600"></i>
+            </div>
+            The dbt Guide
+        </div>
+        
+        <nav class="flex-1 px-4 pb-8 space-y-1 text-sm text-slate-600">
+            <p class="px-3 text-[0.7rem] font-bold text-slate-400 uppercase tracking-widest mt-4 mb-2">Introduction</p>
+            <a href="#intro" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">The Modern Data Stack</a>
+            
+            <p class="px-3 text-[0.7rem] font-bold text-slate-400 uppercase tracking-widest mt-6 mb-2">Fundamentals</p>
+            <a href="#core-concepts" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">Core Concepts & DAG</a>
+            <a href="#setup-config" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">Setup & Configuration</a>
+            
+            <p class="px-3 text-[0.7rem] font-bold text-slate-400 uppercase tracking-widest mt-6 mb-2">Architecture</p>
+            <a href="#architecture" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">Layered Architecture</a>
+            <a href="#materializations" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">Materialization Strategies</a>
+            <a href="#advanced-logic" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">Jinja, Macros & Packages</a>
+            <a href="#python-models" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">Python Models (New)</a>
+            
+            <p class="px-3 text-[0.7rem] font-bold text-slate-400 uppercase tracking-widest mt-6 mb-2">Quality & Operations</p>
+            <a href="#testing-docs" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">Testing & Contracts</a>
+            <a href="#snapshots" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">Snapshots (SCD Type 2)</a>
+            <a href="#daily-commands" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">Everyday Commands Handbook</a>
+            <a href="#automation" class="nav-link block px-3 py-2 rounded-md hover:bg-slate-50 hover:text-slate-900">Slim CI & Orchestration</a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-100 text-xs text-slate-400 text-center font-medium bg-slate-50/50">
+            Zero to Hero Guide
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile sidebar -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/40 z-30 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
+
+    <!-- Main Content -->
+    <main class="lg:pl-72 w-full min-h-screen">
+        <div class="max-w-4xl mx-auto px-6 py-12 lg:px-16 lg:py-20 bg-white min-h-screen shadow-sm border-x border-slate-100">
+            
+            <article class="prose prose-slate prose-headings:tracking-tight prose-h1:text-4xl prose-h1:font-extrabold prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-16 prose-h2:mb-6 prose-h2:border-b prose-h2:pb-3 prose-h2:border-slate-100 prose-h3:text-xl prose-h3:font-semibold prose-a:text-dbt-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-code:before:hidden prose-code:after:hidden max-w-none">
+                
+                <header class="mb-16">
+                    <h1 class="text-slate-900 mb-3 leading-tight text-balance">The Comprehensive Guide to Data Build Tool (dbt)</h1>
+                    <p class="text-xl text-slate-500 mt-0 font-medium">From Core Concepts to Advanced Implementation and Daily Operations</p>
+                </header>
+
+                <!-- Section: Introduction -->
+                <section id="intro" class="scroll-mt-24">
+                    <h2>Introduction to the Modern Data Stack and ELT</h2>
+                    <p>The landscape of data engineering has experienced a fundamental paradigm shift, transitioning away from traditional <strong>Extract, Transform, Load (ETL)</strong> pipelines in favor of the <strong>Extract, Load, Transform (ELT)</strong> architecture. This evolution was precipitated by the exponential increase in the processing power and storage capabilities of cloud-native data platforms like Snowflake, Databricks, Google BigQuery, and Amazon Redshift.</p>
+                    <p>In the modern ELT paradigm, raw data is extracted from source systems and loaded directly into the data warehouse using automated ingestion tools (like Fivetran or Airbyte). The transformation of this raw data into structured, analytics-ready formats is subsequently executed directly within the warehouse, leveraging its native compute resources.</p>
+                    <p>Within this architecture, <strong>Data Build Tool (dbt)</strong> is the industry standard for managing in-warehouse data transformations. Operating on the philosophy of "transformations as code," dbt enables data analysts and analytics engineers to write modular, reusable SQL (and Python) queries that dbt dynamically compiles and executes against the target database. By bridging the gap between traditional data analytics and software engineering, dbt introduces rigorous software development best practices—version control, automated testing, continuous integration, and modular deployment—into the data lifecycle.</p>
+                    
+                    <div class="bg-dbt-50 border border-dbt-100 p-5 my-8 rounded-xl flex gap-4 shadow-sm items-start">
+                        <i data-lucide="info" class="w-6 h-6 text-dbt-600 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <p class="m-0 text-sm text-dbt-900 leading-relaxed"><strong>dbt Core vs. dbt Cloud:</strong> It's important to distinguish between the two. <code>dbt Core</code> is the open-source Python framework driven via the Command Line Interface (CLI) that actually compiles and runs your code. <code>dbt Cloud</code> is a managed service provided by dbt Labs that sits on top of Core, offering a web-based IDE, job scheduling, alerting, and out-of-the-box CI/CD integration.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Core Concepts -->
+                <section id="core-concepts" class="scroll-mt-24">
+                    <h2>Core Concepts and the dbt Mental Model</h2>
+                    <p>Mastering dbt requires the adoption of new mental models. The framework relies on specific terminology to dictate how data flows from raw ingestion to the final delivery of business-ready dashboards.</p>
+                    
+                    <h3>Models and the Directed Acyclic Graph (DAG)</h3>
+                    <p>The fundamental unit of a dbt project is the <strong>"model"</strong>. Traditionally, a model is a single text file with a <code>.sql</code> extension containing a single <code>SELECT</code> statement. Rather than referencing physical database tables via hardcoded strings (which makes code brittle across dev/prod environments), models reference one another dynamically using the Jinja function <code>{{ ref() }}</code>.</p>
+                    <p>When you invoke <code>{{ ref('model_name') }}</code>, dbt evaluates the current environment and resolves the reference into the correct, fully qualified database schema and table name. This also allows dbt to automatically infer relationships and construct a <strong>Directed Acyclic Graph (DAG)</strong>. The DAG is the execution map, ensuring upstream dependencies are always built and validated before dbt attempts to execute downstream models.</p>
+                    
+                    <h3>Sources and Seeds</h3>
+                    <ul>
+                        <li><strong>Sources:</strong> Represent raw data tables loaded by third-party extraction tools. Defined in YAML configuration files, they create a boundary between raw upstream data and transformed data. You query them using <code>{{ source('source_name', 'table_name') }}</code>. This formal declaration enables documentation, lineage visualization, and "freshness" checks to monitor if ingestion pipelines are delayed.</li>
+                        <li><strong>Seeds:</strong> Static CSV files stored in the <code>seeds/</code> directory. When executed via <code>dbt seed</code>, dbt creates and populates tables in the warehouse. Seeds are strictly for small, static lookup tables (e.g., zip codes to states, country codes) and must never substitute proper ingestion tools for large datasets.</li>
+                    </ul>
+                </section>
+
+                <!-- Section: Setup & Configuration -->
+                <section id="setup-config" class="scroll-mt-24">
+                    <h2>Setup & Configuration</h2>
+                    <p>Properly isolating the local dbt environment, establishing secure connections, and initializing the project scaffolding are the critical first steps.</p>
+                    
+                    <h3>Installation and Virtual Environments</h3>
+                    <p>Always install <code>dbt-core</code> within an isolated Python virtual environment to prevent dependency conflicts.</p>
+                    <pre><code class="language-bash"># Create and activate the virtual environment
+python3 -m venv dbt-env
+source dbt-env/bin/activate
+
+# Install the core engine and specific adapter (e.g., Snowflake, BigQuery, Postgres)
+python -m pip install dbt-core dbt-snowflake</code></pre>
+
+                    <h3>Project Initialization</h3>
+                    <p>With dbt installed, initialize your project using the interactive prompt:</p>
+                    <pre><code class="language-bash">dbt init my_analytics_project</code></pre>
+                    <p>The CLI will guide you through connecting to your database, automatically generating your <code>profiles.yml</code> (stored securely in <code>~/.dbt/</code>) and your project scaffolding (<code>dbt_project.yml</code>, models, tests, macros directories).</p>
+
+                    <h3>Connection Debugging</h3>
+                    <p>The first command any developer should run after setup or changing credentials is the debug command. It verifies your Python environment, dbt version, <code>profiles.yml</code> routing, and successfully pings the database:</p>
+                    <pre><code class="language-bash">dbt debug</code></pre>
+                    <p class="font-semibold text-slate-800 mt-6 mb-2 text-sm tracking-wide uppercase">Expected Terminal Output:</p>
+                    <pre><code class="language-bash">...
+Configuration:
+  profiles.yml file [OK found and valid]
+  dbt_project.yml file [OK found and valid]
+
+Connection:
+  host: my-snowflake-account.snowflakecomputing.com
+  database: ANALYTICS_PROD
+  schema: dbt_john_doe
+  Connection test: [OK connection ok]
+
+All checks passed!</code></pre>
+                </section>
+
+                <!-- Section: Architecture -->
+                <section id="architecture" class="scroll-mt-24">
+                    <h2>Architectural Best Practices: Layering & Governance</h2>
+                    <p>Poorly structured dbt projects rapidly degrade into disorganized codebases ("spaghetti DAGs"). The community standard is a three-tiered architecture: <strong>Staging, Intermediate, and Marts.</strong></p>
+
+                    <h3>1. Staging: Atomic Building Blocks</h3>
+                    <p>The sole location where the <code>{{ source() }}</code> macro should be invoked. Extracts raw data and standardizes it.</p>
+                    <ul>
+                        <li><strong>Rule:</strong> One-to-one mapping (one raw table = one staging model). No JOINs or heavy aggregations.</li>
+                        <li><strong>Allowed:</strong> Renaming columns, casting data types, standardizing timestamps, boolean flags.</li>
+                        <li><strong>Naming/Materialization:</strong> <code>stg_[source]__[entity].sql</code>. Materialized as <code>view</code>.</li>
+                    </ul>
+
+                    <h3>2. Intermediate: Purpose-Built Transformations</h3>
+                    <p>Absorbs and manages complex logical operations. Stacks specific, purpose-built transformations before the final presentation layer.</p>
+                    <ul>
+                        <li><strong>Rule:</strong> Join staging models together. Break complex logic into readable, modular steps.</li>
+                        <li><strong>Naming/Materialization:</strong> <code>int_[entity]_[verb].sql</code> (e.g., <code>int_orders_pivoted.sql</code>). Materialized as <code>ephemeral</code> or <code>view</code>.</li>
+                    </ul>
+
+                    <h3>3. Marts: Business-Defined Entities</h3>
+                    <p>The culmination of the pipeline, exposed directly to BI platforms (Tableau, Looker, PowerBI).</p>
+                    <ul>
+                        <li><strong>Rule:</strong> Heavily denormalized ("wide" tables). Pull in descriptive dimensions and pre-calculated metrics.</li>
+                        <li><strong>Naming/Materialization:</strong> Plain English, prefixed by entity type: <code>fct_orders.sql</code> (Fact) or <code>dim_customers.sql</code> (Dimension). Materialized as <code>table</code> or <code>incremental</code>.</li>
+                    </ul>
+
+                    <h3>Modern Governance: Groups and Access</h3>
+                    <p>As of dbt 1.5+, you can define <code>groups</code> and <code>access</code> levels to govern cross-domain models, preventing developers from arbitrarily referencing internal models from other teams.</p>
+                    <pre><code class="language-yaml">models:
+  - name: int_finance_calculations
+    group: finance
+    access: private # Only models in the 'finance' group can ref() this model
+  - name: fct_revenue
+    group: finance
+    access: public # Available to the entire organization</code></pre>
+
+                    <!-- Interactive Layer Examples -->
+                    <div class="mt-10 mb-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <h4 class="text-lg font-bold text-slate-800 mt-0 flex items-center gap-2">
+                            <i data-lucide="layers" class="w-5 h-5 text-dbt-600"></i>
+                            Explore Layer Examples
+                        </h4>
+                        <p class="text-sm text-slate-600 mb-6">See how a single data entity flows through the three architectural layers:</p>
+                        
+                        <div class="space-y-4 not-prose">
+                            <!-- Staging Toggle -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="arrow-right-to-line" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>1. Staging: <code>stg_stripe__payments.sql</code></span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-4 text-slate-600 leading-relaxed">Lightweight cleaning. Renaming, casting, and standardizing. <strong class="text-slate-800">No joins.</strong></p>
+                                    <pre class="!m-0"><code class="language-sql">with source as (
+    select * from {{ source('stripe', 'payment') }}
+),
+renamed as (
+    select
+        id as payment_id,
+        orderid as order_id,
+        paymentmethod as payment_method,
+        status,
+        -- Convert cents to dollars
+        amount / 100 as amount,
+        created as created_at
+    from source
+)
+select * from renamed</code></pre>
+                                </div>
+                            </details>
+                            
+                            <!-- Intermediate Toggle -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="git-merge" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>2. Intermediate: <code>int_orders_pivoted.sql</code></span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-4 text-slate-600 leading-relaxed">Business logic applied. Aggregating data to prepare it for the final mart.</p>
+                                    <pre class="!m-0"><code class="language-sql">with payments as (
+    select * from {{ ref('stg_stripe__payments') }}
+),
+pivoted as (
+    select
+        order_id,
+        sum(case when status = 'success' then amount else 0 end) as total_success_amount,
+        sum(case when status = 'failed' then amount else 0 end) as total_failed_amount
+    from payments
+    group by 1
+)
+select * from pivoted</code></pre>
+                                </div>
+                            </details>
+
+                            <!-- Mart Toggle -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>3. Mart: <code>fct_orders.sql</code></span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-4 text-slate-600 leading-relaxed">Joining the prepared intermediate tables with dimensions to create a wide, BI-ready table.</p>
+                                    <pre class="!m-0"><code class="language-sql">with orders as (
+    select * from {{ ref('stg_jaffle_shop__orders') }}
+),
+order_payments as (
+    select * from {{ ref('int_orders_pivoted') }}
+),
+final as (
+    select
+        orders.order_id,
+        orders.customer_id,
+        orders.order_date,
+        coalesce(order_payments.total_success_amount, 0) as amount
+    from orders
+    left join order_payments using (order_id)
+)
+select * from final</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Materializations -->
+                <section id="materializations" class="scroll-mt-24">
+                    <h2>Materialization Strategies</h2>
+                    <p>Materializations dictate the exact DDL strategies dbt utilizes to persist models. Selecting the appropriate one is an ongoing optimization exercise balancing compute costs and query performance.</p>
+
+                    <div class="overflow-x-auto my-8 rounded-xl border border-slate-200 shadow-sm">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm m-0">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-5 py-4 text-left font-semibold text-slate-900 border-b border-slate-200">Type</th>
+                                    <th class="px-5 py-4 text-left font-semibold text-slate-900 border-b border-slate-200">Optimal Use Case</th>
+                                    <th class="px-5 py-4 text-left font-semibold text-slate-900 border-b border-slate-200">Pros / Cons</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-100">
+                                <tr>
+                                    <td class="px-5 py-4 font-semibold text-slate-800 align-top"><code>view</code></td>
+                                    <td class="px-5 py-4 text-slate-600 align-top leading-relaxed">Staging models, lightweight intermediate logic.</td>
+                                    <td class="px-5 py-4 text-slate-600 align-top leading-relaxed"><span class="text-emerald-600 font-bold mr-1">+</span> Zero build time/storage.<br><span class="text-rose-500 font-bold mr-1">-</span> Slow queries if complex.</td>
+                                </tr>
+                                <tr class="bg-slate-50/30">
+                                    <td class="px-5 py-4 font-semibold text-slate-800 align-top"><code>table</code></td>
+                                    <td class="px-5 py-4 text-slate-600 align-top leading-relaxed">Final Marts queried heavily by end-users.</td>
+                                    <td class="px-5 py-4 text-slate-600 align-top leading-relaxed"><span class="text-emerald-600 font-bold mr-1">+</span> Extremely fast to query.<br><span class="text-rose-500 font-bold mr-1">-</span> Slower to build, drops/recreates on every run.</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-5 py-4 font-semibold text-slate-800 align-top"><code>incremental</code></td>
+                                    <td class="px-5 py-4 text-slate-600 align-top leading-relaxed">Massive fact tables (billions of rows), event streams.</td>
+                                    <td class="px-5 py-4 text-slate-600 align-top leading-relaxed"><span class="text-emerald-600 font-bold mr-1">+</span> Saves immense compute/time.<br><span class="text-rose-500 font-bold mr-1">-</span> Complex to configure and maintain.</td>
+                                </tr>
+                                <tr class="bg-slate-50/30">
+                                    <td class="px-5 py-4 font-semibold text-slate-800 align-top"><code>ephemeral</code></td>
+                                    <td class="px-5 py-4 text-slate-600 align-top leading-relaxed">Very lightweight routing logic (compiled as CTEs).</td>
+                                    <td class="px-5 py-4 text-slate-600 align-top leading-relaxed"><span class="text-emerald-600 font-bold mr-1">+</span> Keeps schema clean (no physical object).<br><span class="text-rose-500 font-bold mr-1">-</span> Can cause DB compiler limits if overused.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Deep Dive: Designing Incremental Models</h3>
+                    <p>Incremental models build the table piecewise. On the first run, it builds a full table. On subsequent runs, it isolates only new or changed rows.</p>
+                    <pre><code class="language-sql">{{
+    config(
+        materialized='incremental',
+        unique_key='event_id',
+        incremental_strategy='merge', -- 'delete+insert' or 'append' also available
+        on_schema_change='sync_all_columns'
+    )
+}}
+
+with source_data as (
+    select * from {{ ref('stg_app_events') }}
+)
+
+select *
+from source_data
+
+{% if is_incremental() %}
+    -- This block is ONLY evaluated during subsequent incremental runs
+    where event_timestamp >= (select coalesce(max(event_timestamp), '1900-01-01') from {{ this }})
+{% endif %}</code></pre>
+                    <p class="font-semibold text-slate-800 mt-6 mb-2 text-sm tracking-wide uppercase">Compiled SQL Output (During an Incremental Run):</p>
+                    <pre><code class="language-sql">/* dbt automatically wraps this in a MERGE statement under the hood */
+with source_data as (
+    select * from my_prod_db.dbt_schema.stg_app_events
+)
+select *
+from source_data
+-- Note how the Jinja block evaluates and injects the dynamic where clause:
+where event_timestamp >= (select coalesce(max(event_timestamp), '1900-01-01') from my_prod_db.dbt_schema.fct_app_events)</code></pre>
+
+                    <!-- Interactive Config Strategy Explanations -->
+                    <div class="mt-10 mb-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <h4 class="text-lg font-bold text-slate-800 mt-0 flex items-center gap-2">
+                            <i data-lucide="settings-2" class="w-5 h-5 text-dbt-600"></i>
+                            Choosing the Right Incremental Strategy
+                        </h4>
+                        <p class="text-sm text-slate-600 mb-6">The <code>incremental_strategy</code> determines the exact SQL commands dbt runs to weave your new data into the existing table. Choosing incorrectly can lead to duplicates or massive database bills. Explore the strategies below:</p>
+                        
+                        <div class="space-y-4 not-prose">
+                            <!-- Merge Toggle -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors" open>
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="combine" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>Strategy: <code>merge</code> (Default & Safest)</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-3 leading-relaxed"><strong class="text-slate-800">When to use:</strong> When your source records can be updated over time (e.g., an order changing from 'pending' to 'shipped' to 'delivered'). It requires defining a <code>unique_key</code>.</p>
+                                    <p class="mb-4 leading-relaxed"><strong class="text-slate-800">How it works:</strong> dbt translates your model into a standard SQL <code>MERGE</code> statement. It matches incoming rows against existing rows using the <code>unique_key</code>. If a match is found, it <strong>updates</strong> the existing row. If no match is found, it <strong>inserts</strong> the new row.</p>
+                                    <pre class="!m-0"><code class="language-sql">{{
+    config(
+        materialized='incremental',
+        unique_key='order_id',
+        incremental_strategy='merge'
+    )
+}}</code></pre>
+                                </div>
+                            </details>
+
+                            <!-- Delete+Insert Toggle -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="scissors" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>Strategy: <code>delete+insert</code></span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-3 leading-relaxed"><strong class="text-slate-800">When to use:</strong> When your target data warehouse struggles with the compute cost of complex <code>MERGE</code> statements, or when you are processing data in large, discrete batches (like daily partitions) and you prefer to entirely replace a partition if it runs again.</p>
+                                    <p class="mb-4 leading-relaxed"><strong class="text-slate-800">How it works:</strong> It is a two-step process. First, dbt executes a <code>DELETE</code> statement targeting the specific partitions or <code>unique_key</code>s found in the new run's batch. Immediately following, it executes an <code>INSERT</code> to add the new batch. It essentially "clears the space" before placing the new data.</p>
+                                    <pre class="!m-0"><code class="language-sql">{{
+    config(
+        materialized='incremental',
+        unique_key='date_partition',
+        incremental_strategy='delete+insert'
+    )
+}}</code></pre>
+                                </div>
+                            </details>
+
+                            <!-- Append Toggle -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>Strategy: <code>append</code> (Fastest Performance)</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-3 leading-relaxed"><strong class="text-slate-800">When to use:</strong> For purely immutable event streams (e.g., website clickstreams, server logs, IoT sensor data) where a record is <strong>never</strong> updated or deleted once it is created.</p>
+                                    <p class="mb-4 leading-relaxed"><strong class="text-slate-800">How it works:</strong> dbt blindly issues a simple <code>INSERT</code> statement for whatever data passes your <code>is_incremental()</code> filter. It ignores the <code>unique_key</code>. Because it doesn't need to scan the table for existing matches to update, it is lightning fast. <em class="text-rose-600">Warning: Running the exact same time window twice will result in duplicate rows!</em></p>
+                                    <pre class="!m-0"><code class="language-sql">{{
+    config(
+        materialized='incremental',
+        incremental_strategy='append' 
+        -- Notice we don't need a unique_key for append!
+    )
+}}</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Jinja, Macros & Packages -->
+                <section id="advanced-logic" class="scroll-mt-24">
+                    <h2>Advanced Logic: Jinja, Macros, and Packages</h2>
+                    
+                    <h3>Jinja Fundamentals: Loops and Variables</h3>
+                    <p>Standard SQL lacks control structures (loops, variables, DRY principles). dbt resolves this by wrapping SQL files in <strong>Jinja</strong>.</p>
+                    <p>A primary use case for Jinja is pivoting data dynamically. Instead of copying and pasting the same <code>CASE WHEN</code> statement dozens of times, you can use a <code>for</code> loop:</p>
+                    <pre><code class="language-sql">{% set payment_methods = ["bank_transfer", "credit_card", "gift_card", "paypal"] %}
+
+select
+    order_id,
+    {% for payment_method in payment_methods %}
+    sum(case when payment_method = '{{ payment_method }}' then amount else 0 end) as {{ payment_method }}_amount
+    {%- if not loop.last -%},{%- endif -%}
+    {% endfor %},
+    sum(amount) as total_amount
+from {{ ref('stg_payments') }}
+group by 1</code></pre>
+                    
+                    <p class="font-semibold text-slate-800 mt-6 mb-2 text-sm tracking-wide uppercase">Compiled SQL Output:</p>
+                    <pre><code class="language-sql">select
+    order_id,
+    sum(case when payment_method = 'bank_transfer' then amount else 0 end) as bank_transfer_amount,
+    sum(case when payment_method = 'credit_card' then amount else 0 end) as credit_card_amount,
+    sum(case when payment_method = 'gift_card' then amount else 0 end) as gift_card_amount,
+    sum(case when payment_method = 'paypal' then amount else 0 end) as paypal_amount,
+    sum(amount) as total_amount
+from my_prod_db.staging.stg_payments
+group by 1</code></pre>
+
+                    <h3>Abstracting Logic with Macros</h3>
+                    <p>When logic becomes complex or repetitive across multiple models, you should abstract it into a macro (which acts like a Python function).</p>
+                    <pre><code class="language-sql">-- macros/cents_to_dollars.sql
+{% macro cents_to_dollars(column_name, scale=2) %}
+    ROUND( CAST({{ column_name }} AS NUMERIC) / 100.0, {{ scale }} )
+{% endmacro %}</code></pre>
+                    <p>Usage in a model: <code>select {{ cents_to_dollars('transaction_amount') }} as amount_usd from ...</code></p>
+                    
+                    <p class="font-semibold text-slate-800 mt-6 mb-2 text-sm tracking-wide uppercase">Compiled SQL Output (When Invoked):</p>
+                    <pre><code class="language-sql">select 
+    ROUND( CAST(transaction_amount AS NUMERIC) / 100.0, 2 ) as amount_usd 
+from ...</code></pre>
+
+                    <h3>Package Management (dependencies.yml)</h3>
+                    <p>You do not have to write every macro from scratch. The dbt community provides packages. As of dbt 1.6, the standard is <code>dependencies.yml</code> (replacing the older <code>packages.yml</code>).</p>
+                    <pre><code class="language-yaml"># dependencies.yml
+packages:
+  - package: dbt-labs/dbt_utils
+    version: 1.1.1
+  - package: calogica/dbt_expectations
+    version: 0.9.0</code></pre>
+                    <p>Run <code>dbt deps</code> to install them. Packages like <code>dbt_utils.surrogate_key</code> or <code>dbt_utils.pivot</code> save hundreds of hours of coding.</p>
+
+                    <!-- Interactive Macro Examples -->
+                    <div class="mt-10 mb-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <h4 class="text-lg font-bold text-slate-800 mt-0 flex items-center gap-2">
+                            <i data-lucide="code-2" class="w-5 h-5 text-dbt-600"></i>
+                            Explore Essential Macros
+                        </h4>
+                        <p class="text-sm text-slate-600 mb-6">Here are some of the most widely used macros that solve everyday data engineering problems:</p>
+                        
+                        <div class="space-y-4 not-prose">
+                            <!-- Limit Data in Dev Toggle -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="filter" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>Pattern: Limit Data in Development</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-4 leading-relaxed">When querying massive tables during local development, it's a best practice to limit the data scanned to save time and warehouse costs. This macro automatically applies a date filter only if you are in the <code>dev</code> environment.</p>
+                                    <pre><code class="language-sql">-- macros/limit_data_in_dev.sql
+{% macro limit_data_in_dev(column_name, dev_days_of_data=3) %}
+{% if target.name == 'dev' %}
+    where {{ column_name }} >= dateadd('day', -{{ dev_days_of_data }}, current_timestamp)
+{% endif %}
+{% endmacro %}</code></pre>
+                                    <p class="mt-5 mb-3 font-semibold text-slate-800 tracking-wide uppercase text-xs">Usage in a model:</p>
+                                    <pre class="!m-0"><code class="language-sql">select * from {{ ref('stg_massive_event_table') }}
+{{ limit_data_in_dev('event_timestamp') }}</code></pre>
+                                </div>
+                            </details>
+
+                            <!-- Generate Schema Name Toggle -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="folder-tree" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>Pattern: Override Default Schema Naming</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-4 leading-relaxed">By default, dbt concatenates your target schema and custom schemas (e.g., <code>dbt_johndoe_marts</code>). This macro overrides that behavior so production environments build into clean schemas like <code>marts</code> without prefixes.</p>
+                                    <pre class="!m-0"><code class="language-sql">-- macros/generate_schema_name.sql
+{% macro generate_schema_name(custom_schema_name, node) -%}
+
+    {%- set default_schema = target.schema -%}
+    {%- if target.name == 'prod' and custom_schema_name is not none -%}
+        -- In prod, ignore the default schema and strictly use the custom schema
+        {{ custom_schema_name | trim }}
+    {%- else -%}
+        -- In dev, append the custom schema to the user's default schema (e.g., dbt_alice_marts)
+        {{ default_schema }}_{{ custom_schema_name | trim }}
+    {%- endif -%}
+
+{%- endmacro %}</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Python Models -->
+                <section id="python-models" class="scroll-mt-24">
+                    <h2>Python Models (Data Science in the DAG)</h2>
+                    <p>Since dbt 1.3, developers can create models using Python (specifically for platforms that support it, like Snowflake Snowpark, Databricks, and BigQuery). Python models are ideal for tasks SQL struggles with: complex string manipulation, API parsing, or applying machine learning models.</p>
+                    <pre><code class="language-python"># models/marts/fct_customer_churn_prediction.py
+import pandas as pd
+
+def model(dbt, session):
+    dbt.config(
+        materialized="table",
+        packages=["scikit-learn", "pandas"]
+    )
+
+    # DataFrame representing an upstream dbt model
+    df = dbt.ref("fct_customer_features").to_pandas()
+
+    # Complex Python logic / ML Inference here
+    df['churn_probability'] = apply_churn_model(df)
+
+    return df</code></pre>
+                    <p class="font-semibold text-slate-800 mt-6 mb-2 text-sm tracking-wide uppercase">Resulting Action Output:</p>
+                    <p class="text-slate-600 mt-0 bg-slate-50 p-4 border border-slate-100 rounded-lg shadow-sm">dbt translates this Python script into a stored procedure (e.g., in Snowflake Snowpark) behind the scenes, executes it, and outputs a permanent physical <code>table</code> in your warehouse containing the resulting Pandas DataFrame, completely ready for BI consumption.</p>
+                </section>
+
+                <!-- Section: Quality & Contracts -->
+                <section id="testing-docs" class="scroll-mt-24">
+                    <h2>Quality: Testing and Model Contracts</h2>
+                    
+                    <h3>Generic and Singular Tests</h3>
+                    <p>dbt shifts data quality validation "to the left". Generic tests (<code>unique</code>, <code>not_null</code>, <code>accepted_values</code>, <code>relationships</code>) are applied in YAML.</p>
+                    <p><strong>Singular tests</strong> are custom SQL queries saved in the <code>tests/</code> directory. A singular test must select <em>failing rows</em>. If it returns 0 rows, the test passes.</p>
+                    <pre><code class="language-sql">-- tests/assert_total_payment_amount_is_positive.sql
+select
+    order_id,
+    sum(amount) as total_amount
+from {{ ref('stg_payments') }}
+group by 1
+having sum(amount) < 0</code></pre>
+                    
+                    <p class="font-semibold text-slate-800 mt-6 mb-2 text-sm tracking-wide uppercase">Expected Output (If the Test FAILS):</p>
+                    <pre><code class="language-sql">| order_id | total_amount |
+|----------|--------------|
+| 8923     | -15.50       |
+| 1024     | -5.00        |</code></pre>
+                    <p class="text-sm text-rose-600/90 font-medium bg-rose-50 border border-rose-100 p-3 rounded-lg mt-4">Because this query returned records (2 rows), the pipeline immediately halts and flags an error. If it had returned 0 rows, dbt would mark the test as a success.</p>
+
+                    <h3>Model Contracts (dbt 1.5+)</h3>
+                    <p>Tests run <em>after</em> the model is built. <strong>Model Contracts</strong> enforce constraints <em>during</em> the build process at the database level. If a contract is broken (e.g., a column data type changes or a null is introduced), the model fails to build, preventing bad data from entering the warehouse.</p>
+                    <pre><code class="language-yaml">models:
+  - name: dim_users
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: user_id
+        data_type: int
+        constraints:
+          - type: not_null
+          - type: primary_key
+      - name: email
+        data_type: varchar</code></pre>
+
+                    <!-- Interactive Testing Examples -->
+                    <div class="mt-10 mb-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <h4 class="text-lg font-bold text-slate-800 mt-0 flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-dbt-600"></i>
+                            Advanced Testing Patterns
+                        </h4>
+                        <p class="text-sm text-slate-600 mb-6">Go beyond simple null checks by combining packages and advanced SQL techniques:</p>
+                        
+                        <div class="space-y-4 not-prose">
+                            <!-- dbt Expectations Toggle -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="check-square" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>Pattern: Testing Business Logic (dbt_expectations)</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-4 leading-relaxed">Using the popular <code>dbt_expectations</code> package, you can write powerful, expressive YAML tests without writing custom SQL. E.g., ensuring string formats or bounding mathematical values.</p>
+                                    <pre class="!m-0"><code class="language-yaml">models:
+  - name: stg_users
+    columns:
+      - name: email
+        tests:
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+      - name: age
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 18
+              max_value: 120</code></pre>
+                                </div>
+                            </details>
+
+                            <!-- Cross-model Singular Toggle -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="git-compare" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>Pattern: Cross-Model Integrity (Singular Test)</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-4 leading-relaxed">A powerful use for singular tests is ensuring data balances perfectly across two different models. For example, validating that total payments match the recorded order totals.</p>
+                                    <pre class="!m-0"><code class="language-sql">-- tests/assert_order_totals_match_payments.sql
+with orders as (
+    select order_id, total_amount from {{ ref('fct_orders') }}
+),
+payments as (
+    select order_id, sum(amount) as total_paid from {{ ref('fct_payments') }} group by 1
+)
+select 
+    orders.order_id,
+    orders.total_amount,
+    payments.total_paid
+from orders
+join payments using (order_id)
+-- The test FAILS if any records are returned where amounts don't match
+where orders.total_amount != payments.total_paid</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Snapshots -->
+                <section id="snapshots" class="scroll-mt-24">
+                    <h2>Tracking Historical Data: dbt Snapshots</h2>
+                    <p>Snapshots monitor mutable source tables, detect alterations, and record changes sequentially by appending new rows with validity timestamps, acting as automated Type-2 Slowly Changing Dimensions (SCD Type 2).</p>
+                    
+                    <pre><code class="language-sql">{% snapshot orders_snapshot %}
+
+{{
+    config(
+      target_schema='snapshots',
+      unique_key='order_id',
+      strategy='timestamp',
+      updated_at='last_modified_at'
+    )
+}}
+
+select * from {{ source('jaffle_shop', 'orders') }}
+
+{% endsnapshot %}</code></pre>
+                    
+                    <p class="font-semibold text-slate-800 mt-6 mb-2 text-sm tracking-wide uppercase">Resulting Table Output (SCD Type 2 structure):</p>
+                    <pre><code class="language-sql">| order_id | status  | last_modified_at    | dbt_valid_from      | dbt_valid_to        |
+|----------|---------|---------------------|---------------------|---------------------|
+| 101      | pending | 2023-10-01 08:00:00 | 2023-10-01 08:00:00 | 2023-10-02 14:30:00 |
+| 101      | shipped | 2023-10-02 14:30:00 | 2023-10-02 14:30:00 | null                |</code></pre>
+                    <p class="text-sm text-dbt-800 bg-dbt-50 border border-dbt-100 p-4 rounded-lg mt-4 shadow-sm leading-relaxed">Notice how dbt automatically generated the <code>dbt_valid_from</code> and <code>dbt_valid_to</code> columns to track the history. The active, current record is easily identified by having a <code>null</code> end date.</p>
+
+                    <!-- Interactive Snapshot Strategies -->
+                    <div class="mt-10 mb-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <h4 class="text-lg font-bold text-slate-800 mt-0 flex items-center gap-2">
+                            <i data-lucide="history" class="w-5 h-5 text-dbt-600"></i>
+                            Snapshot Strategies Explained
+                        </h4>
+                        <p class="text-sm text-slate-600 mb-6">How does dbt know when a record actually changed? It relies on the strategy you pick in the configuration.</p>
+                        
+                        <div class="space-y-4 not-prose">
+                            <!-- Timestamp Strategy -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors" open>
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="clock" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>Strategy: <code>timestamp</code> (Recommended)</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-4 leading-relaxed">This strategy compares a reliable <code>updated_at</code> column on your source data against the latest snapshot. If the timestamp is newer, dbt records a change. This is highly performant.</p>
+                                    <pre class="!m-0"><code class="language-yaml">config(
+    strategy='timestamp',
+    updated_at='updated_at_column'
+)</code></pre>
+                                </div>
+                            </details>
+
+                            <!-- Check Strategy -->
+                            <details class="group border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden hover:border-slate-300 transition-colors">
+                                <summary class="flex items-center justify-between p-4 cursor-pointer font-semibold text-slate-800 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dbt-500 focus-visible:ring-inset">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-dbt-50 p-1.5 rounded-lg text-dbt-600">
+                                            <i data-lucide="scan-line" class="w-4 h-4"></i>
+                                        </div>
+                                        <span>Strategy: <code>check</code></span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300 group-open:rotate-180 text-slate-400"></i>
+                                </summary>
+                                <div class="p-5 border-t border-slate-100 text-sm text-slate-600 bg-white">
+                                    <p class="mb-4 leading-relaxed">Use this when your source table does <strong>not</strong> have a reliable <code>updated_at</code> column. dbt will literally compare a list of columns between the source and the snapshot. If any value differs, it triggers an update. Use <code>check_cols='all'</code> to check every column, or pass a list of specific columns to monitor.</p>
+                                    <pre class="!m-0"><code class="language-yaml">config(
+    strategy='check',
+    check_cols=['status', 'priority', 'assignee_id']
+)</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Everyday Commands -->
+                <section id="daily-commands" class="scroll-mt-24">
+                    <h2>The Developer's Everyday Commands Handbook</h2>
+                    <p>Interacting with dbt requires CLI fluency. Here are the commands you will use daily, moving away from older paradigms and adopting modern dbt features.</p>
+
+                    <div class="grid gap-6 my-10 not-prose">
+                        <!-- Command Block 1: Execution & Building -->
+                        <div class="group border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:shadow-soft transition-all duration-300 ring-1 ring-transparent hover:ring-slate-200">
+                            <h3 class="text-[0.85rem] font-bold text-slate-900 mb-5 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="play-circle" class="w-4 h-4 text-dbt-500"></i>
+                                Execution & Building
+                            </h3>
+                            <div class="space-y-6">
+                                <div>
+                                    <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm mb-2 inline-block shadow-sm">dbt build</code>
+                                    <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">Replaces <code>dbt run</code> followed by <code>dbt test</code>.</strong> It intelligently builds and tests models node-by-node. If model A fails its test, dbt immediately halts the build of model B (which depends on A), saving compute and preventing cascading errors.</p>
+                                </div>
+                                <div>
+                                    <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm mb-2 inline-block shadow-sm">dbt build --select my_model+</code>
+                                    <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">Node Selection:</strong> Builds <code>my_model</code> and everything downstream of it. Use <code>+my_model</code> for upstream parents, or <code>+my_model+</code> for the whole lineage slice. Use <code>@my_model</code> to build the model, its children, and the parents of those children (ideal for testing local changes).</p>
+                                </div>
+                                <div>
+                                    <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm mb-2 inline-block shadow-sm">dbt retry</code>
+                                    <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">The Lifesaver:</strong> Did a 3-hour run fail on the very last model due to a typo? Fix the typo and run <code>dbt retry</code>. It reads the previous run state and strictly executes only the models that failed or were skipped.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Command Block 2: Targeted Execution with Variables -->
+                        <div class="group border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:shadow-soft transition-all duration-300 ring-1 ring-transparent hover:ring-slate-200">
+                            <h3 class="text-[0.85rem] font-bold text-slate-900 mb-5 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="variable" class="w-4 h-4 text-dbt-500"></i>
+                                Targeted Execution & Variables
+                            </h3>
+                            <div class="flex flex-col gap-2.5 mb-4">
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm">dbt run --select {{ model }} --vars '{{ vars_dict }}'</code>
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm">dbt test --select {{ model }} --vars '{{ vars_dict }}'</code>
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm">dbt build --select {{ model }} --vars '{{ vars_dict }}'</code>
+                            </div>
+                            <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">Runtime Variables:</strong> While <code>build</code> is the modern standard, you can still granularly execute a <code>run</code> (transformations only) or <code>test</code> (validations only). Passing <code>--vars</code> allows you to inject JSON dictionaries to override variables at runtime, which is incredibly useful for backfilling specific dates or environments.</p>
+                        </div>
+
+                        <!-- Command Block 3: Source Management -->
+                        <div class="group border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:shadow-soft transition-all duration-300 ring-1 ring-transparent hover:ring-slate-200">
+                            <h3 class="text-[0.85rem] font-bold text-slate-900 mb-5 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="database-zap" class="w-4 h-4 text-dbt-500"></i>
+                                Source Management
+                            </h3>
+                            <div class="flex flex-wrap gap-2.5 mb-4">
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm shadow-sm">dbt source freshness --select source:{{ source }}</code>
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm shadow-sm">dbt test --select source:{{ source }}</code>
+                            </div>
+                            <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">Validation:</strong> Use <code>freshness</code> to verify if your upstream raw data is arriving on time based on your YAML definitions. Use the targeted <code>test</code> command to validate exclusively your raw data ingestion before kicking off your downstream pipeline.</p>
+                        </div>
+
+                        <!-- Command Block 4: Parsing & Compilation -->
+                        <div class="group border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:shadow-soft transition-all duration-300 ring-1 ring-transparent hover:ring-slate-200">
+                            <h3 class="text-[0.85rem] font-bold text-slate-900 mb-5 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="code" class="w-4 h-4 text-dbt-500"></i>
+                                Project Parsing & Compilation
+                            </h3>
+                            <div class="flex flex-col gap-2.5 mb-4">
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm">dbt parse</code>
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm">dbt show --select {{ model }} --limit 5</code>
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm">dbt compile --select {{ model }} --vars '{{ vars_dict }}'</code>
+                            </div>
+                            <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">Compilation:</strong> <code>dbt parse</code> quickly generates the <code>manifest.json</code> without executing any SQL—great for catching Jinja or YAML syntax errors. <code>dbt show</code> compiles Jinja and returns a live data preview directly in your terminal. Finally, <code>dbt compile</code> translates your Jinja into standard SQL and saves it in the <code>target/</code> folder.</p>
+                        </div>
+
+                        <!-- Command Block 5: Advanced State Management -->
+                        <div class="group border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:shadow-soft transition-all duration-300 ring-1 ring-transparent hover:ring-slate-200">
+                            <h3 class="text-[0.85rem] font-bold text-slate-900 mb-5 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="network" class="w-4 h-4 text-dbt-500"></i>
+                                Advanced State & Cloning
+                            </h3>
+                            <div class="flex flex-col gap-2.5 mb-4">
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm break-all">dbt run --select {{ model }} --favor-state --defer --state $PROJECT_HOME/artifacts/prd/</code>
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm break-all">dbt clone --state $PROJECT_HOME/artifacts/prd --select {{ model }}</code>
+                            </div>
+                            <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">State Management:</strong> By passing your production artifacts to <code>--state</code> and using <code>--favor-state --defer</code>, you can build models locally while seamlessly reading from production's upstream dependencies instead of building them all from scratch. The <code>dbt clone</code> command allows you to create lightning-fast, zero-copy clones of tables (on supported platforms like Snowflake or BigQuery) directly into your development environment.</p>
+                        </div>
+
+                        <!-- Command Block 6: Packages & Operations -->
+                        <div class="group border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:shadow-soft transition-all duration-300 ring-1 ring-transparent hover:ring-slate-200">
+                            <h3 class="text-[0.85rem] font-bold text-slate-900 mb-5 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="wrench" class="w-4 h-4 text-dbt-500"></i>
+                                Maintenance & Operations
+                            </h3>
+                            <div class="flex flex-col gap-2.5 mb-4">
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm">dbt run-operation list_models_upstreams --args '{{ args_dict }}'</code>
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm">dbt deps</code>
+                                <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm w-fit shadow-sm">dbt clean && dbt deps</code>
+                            </div>
+                            <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">Operations:</strong> <code>run-operation</code> executes a specific macro directly without building a model—perfect for listing dependencies or automating database permission grants. Run <code>deps</code> to install upstream packages, and use the classic <code>dbt clean && dbt deps</code> to wipe your <code>target/</code> cache and re-download everything when facing bizarre caching errors.</p>
+                        </div>
+
+                        <!-- Command Block 7: Static Data Loading -->
+                        <div class="group border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:shadow-soft transition-all duration-300 ring-1 ring-transparent hover:ring-slate-200">
+                            <h3 class="text-[0.85rem] font-bold text-slate-900 mb-5 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-dbt-500"></i>
+                                Static Data Loading
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm mb-2 inline-block shadow-sm">dbt seed</code>
+                                    <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">The Mapping Loader:</strong> This command is essential for loading static CSV files located in your <code>seeds/</code> directory into your data warehouse as tables. It is typically used for mapping tables, country codes, or static reference data that your models need to join against. You can also run <code>dbt build --select my_seed+</code> to rebuild downstream models when a seed changes.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Command Block 8: Historical Tracking -->
+                        <div class="group border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:shadow-soft transition-all duration-300 ring-1 ring-transparent hover:ring-slate-200">
+                            <h3 class="text-[0.85rem] font-bold text-slate-900 mb-5 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="history" class="w-4 h-4 text-dbt-500"></i>
+                                Historical Tracking
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm mb-2 inline-block shadow-sm">dbt snapshot</code>
+                                    <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">SCD Type 2 Automation:</strong> If you are tracking historical changes in your mutable source tables (Slowly Changing Dimensions Type 2), this is the command to use. It runs the snapshot definitions to capture the state of your records at a given point in time, allowing you to easily reconstruct historical views of your data.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Command Block 9: Documentation & Lineage -->
+                        <div class="group border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:shadow-soft transition-all duration-300 ring-1 ring-transparent hover:ring-slate-200">
+                            <h3 class="text-[0.85rem] font-bold text-slate-900 mb-5 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="book-open" class="w-4 h-4 text-dbt-500"></i>
+                                Documentation & Lineage
+                            </h3>
+                            <div class="space-y-6">
+                                <div>
+                                    <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm mb-2 inline-block shadow-sm">dbt docs generate</code>
+                                    <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">Project Compilation:</strong> This parses your project and generates the <code>manifest.json</code> and <code>catalog.json</code> files, which contain all the metadata about your models, descriptions, tests, and database schema information.</p>
+                                </div>
+                                <div>
+                                    <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm mb-2 inline-block shadow-sm">dbt docs serve</code>
+                                    <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">The Visualizer:</strong> Spins up a local web server to host the documentation generated in the previous step. This is an everyday necessity for visualizing your lineage graph (the DAG) and verifying that your dependencies and model descriptions are rendering correctly before merging code.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Command Block 10: Troubleshooting & Discovery -->
+                        <div class="group border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:shadow-soft transition-all duration-300 ring-1 ring-transparent hover:ring-slate-200">
+                            <h3 class="text-[0.85rem] font-bold text-slate-900 mb-5 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="search-check" class="w-4 h-4 text-dbt-500"></i>
+                                Troubleshooting & Discovery
+                            </h3>
+                            <div class="space-y-6">
+                                <div>
+                                    <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm mb-2 inline-block shadow-sm">dbt debug</code>
+                                    <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">The Connection Checker:</strong> Before you go down a rabbit hole trying to figure out why your models are failing to compile, <code>dbt debug</code> checks your <code>profiles.yml</code>, tests your database connection, and verifies your dbt project configurations. It is the first thing you should run when setting up a new environment or facing connection timeouts.</p>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <code class="font-bold text-dbt-700 bg-dbt-50 border border-dbt-100 px-2.5 py-1.5 rounded-lg text-sm inline-block shadow-sm">dbt ls</code>
+                                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">(or dbt list)</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 m-0 leading-relaxed"><strong class="text-slate-800">The Selector Validator:</strong> Instead of running models to see what your <code>--select</code> syntax actually grabs, use <code>dbt ls</code>. For example, <code>dbt ls --select my_model+</code> will simply output a list of all nodes that match the criteria. It is invaluable for debugging complex node selection syntax without executing any queries against your warehouse.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Automation -->
+                <section id="automation" class="scroll-mt-24">
+                    <h2>Automation, Hooks, and Slim CI</h2>
+                    
+                    <h3>Hooks</h3>
+                    <p>Hooks are SQL snippets executing at specific intervals (<code>pre-hook</code>, <code>post-hook</code>, <code>on-run-start</code>). They automate governance tasks like granting permissions.</p>
+                    <pre><code class="language-yaml">models:
+  my_project:
+    +post-hook:
+      - "GRANT SELECT ON {{ this }} TO ROLE bi_reporter_role"</code></pre>
+
+                    <h3>State-Aware Orchestration (Slim CI & Deferral)</h3>
+                    <p>The most critical advancement in dbt deployment architecture is <strong>Slim CI</strong>. In enterprise projects, running the entire DAG on every Pull Request is too slow and expensive. By providing the <code>manifest.json</code> from the production environment, you can instruct dbt to strictly build what has changed.</p>
+                    <pre><code class="language-bash">dbt build --select state:modified+ --state path/to/prod/artifacts --defer</code></pre>
+                    <p>The <code>--defer</code> flag is magical: it tells dbt, "If an upstream parent model wasn't modified in this PR, don't build it in my dev schema. Instead, just read the production version of that parent model." This reduces CI/CD runtimes from hours to minutes.</p>
+                </section>
+                
+                <hr class="my-16 border-slate-200">
+                
+                <p class="text-sm text-slate-500 italic leading-relaxed">Data Build Tool has fundamentally redefined the operational standards of data engineering. By bridging software engineering principles with data transformation, a properly architected dbt environment provides a single, governed, transparent, and highly resilient source of truth.</p>
+            </article>
+        </div>
+    </main>
+
+    <!-- Interactive Scripts -->
+    <script>
+        // 1. Initialize Syntax Highlighting
+        hljs.highlightAll();
+
+        // 2. Mobile Menu Toggle
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        menuBtn.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        // Close menu when clicking a link on mobile
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if(window.innerWidth < 1024) {
+                    toggleMenu();
+                }
+            });
+        });
+
+        // 3. Setup Premium Copy to Clipboard for Code Blocks
+        document.querySelectorAll('pre').forEach(pre => {
+            // Wrapper for positioning
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.className = 'group';
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
+
+            // Copy Button
+            const btn = document.createElement('button');
+            btn.className = 'absolute top-4 right-4 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-600 shadow-sm transition-all opacity-0 group-hover:opacity-100 flex items-center gap-1.5 backdrop-blur-sm z-10';
+            btn.innerHTML = '<i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy';
+            
+            btn.onclick = () => {
+                const code = pre.querySelector('code').innerText;
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> Copied';
+                    btn.classList.add('border-emerald-500/50', 'bg-slate-800');
+                    setTimeout(() => {
+                        btn.innerHTML = '<i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy';
+                        btn.classList.remove('border-emerald-500/50', 'bg-slate-800');
+                        lucide.createIcons();
+                    }, 2000);
+                } catch (err) {
+                    console.error('Copy failed', err);
+                }
+                document.body.removeChild(textarea);
+            };
+            wrapper.appendChild(btn);
+        });
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // 4. ScrollSpy: Highlight active sidebar link
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        const observerOptions = {
+            root: null,
+            rootMargin: '-20% 0px -80% 0px',
+            threshold: 0
+        };
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${id}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => observer.observe(section));
+    </script>
+</body>
+</html>
